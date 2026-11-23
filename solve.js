@@ -96,15 +96,38 @@ function longDate(date) {
   return v;
 }
 
+const WS_ASCII = new Uint8Array(128);
+WS_ASCII[9] = 1;
+WS_ASCII[10] = 1;
+WS_ASCII[11] = 1;
+WS_ASCII[12] = 1;
+WS_ASCII[13] = 1;
+WS_ASCII[32] = 1;
+
+function isSpaceAt(c) {
+  if (c < 128) return WS_ASCII[c] === 1;
+  return (
+    c === 0xa0 ||
+    c === 0x1680 ||
+    (c >= 0x2000 && c <= 0x200a) ||
+    c === 0x2028 ||
+    c === 0x2029 ||
+    c === 0x202f ||
+    c === 0x205f ||
+    c === 0x3000 ||
+    c === 0xfeff
+  );
+}
+
 /** The words of a body: its runs of characters other than whitespace. */
 function wordsOf(text) {
   let count = 0;
   let inWord = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text.charCodeAt(i);
-    const space = c === 32 || c === 9 || c === 10 || c === 13 || c === 11 || c === 12 || c === 0xa0 || c === 0x1680 || (c >= 0x2000 && c <= 0x200a) || c === 0x2028 || c === 0x2029 || c === 0x202f || c === 0x205f || c === 0x3000 || c === 0xfeff;
-    if (space) inWord = false;
-    else if (!inWord) {
+  const n = text.length;
+  for (let i = 0; i < n; i++) {
+    if (isSpaceAt(text.charCodeAt(i))) {
+      inWord = false;
+    } else if (!inWord) {
       inWord = true;
       count++;
     }
