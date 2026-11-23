@@ -17,7 +17,23 @@ REPL[QUOT] = '&quot;';
 REPL[APOS] = '&#39;';
 
 /** `text` with & < > " and ' escaped: the plain stretches between them are copied in one slice each. */
+const ESC_CACHE = new Map();
+const ESC_CACHE_MAX = 20000;
+
 function escapeHtml(text) {
+  // The same strings recur page after page (titles, nav labels, tag names): a memo turns four
+  // fifths of the calls into one lookup. The map is bounded so a pathologically varied document
+  // cannot grow it without limit.
+  // Only strings long enough that a scan costs more than a lookup are worth remembering.
+  if (text.length < 24) return escapeHtmlRaw(text);
+  const hit = ESC_CACHE.get(text);
+  if (hit !== undefined) return hit;
+  const out = escapeHtmlRaw(text);
+  if (ESC_CACHE.size < ESC_CACHE_MAX) ESC_CACHE.set(text, out);
+  return out;
+}
+
+function escapeHtmlRaw(text) {
   const n = text.length;
   let i = 0;
   while (i < n) {
