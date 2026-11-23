@@ -17,22 +17,6 @@ REPL[QUOT] = '&quot;';
 REPL[APOS] = '&#39;';
 
 /** `text` with & < > " and ' escaped: the plain stretches between them are copied in one slice each. */
-const ESC_CACHE = new Map();
-const ESC_CACHE_MAX = 20000;
-
-function escapeHtml(text) {
-  // The same strings recur page after page (titles, nav labels, tag names): a memo turns four
-  // fifths of the calls into one lookup. The map is bounded so a pathologically varied document
-  // cannot grow it without limit.
-  // Only strings long enough that a scan costs more than a lookup are worth remembering.
-  if (text.length < 24) return escapeHtmlRaw(text);
-  const hit = ESC_CACHE.get(text);
-  if (hit !== undefined) return hit;
-  const out = escapeHtmlRaw(text);
-  if (ESC_CACHE.size < ESC_CACHE_MAX) ESC_CACHE.set(text, out);
-  return out;
-}
-
 function escapeHtmlRaw(text) {
   const n = text.length;
   let i = 0;
@@ -53,6 +37,21 @@ function escapeHtmlRaw(text) {
   }
   if (start < n) out += text.slice(start);
   return out;
+}
+
+const ESCAPE_MIN = 24;
+const ESCAPE_CACHE_MAX = 20000;
+const escapeCache = new Map();
+
+/** `text` escaped; long strings (titles, nav labels, tags) are escaped once and their answer remembered. */
+function escapeHtml(text) {
+  if (text.length < ESCAPE_MIN) return escapeHtmlRaw(text);
+  let v = escapeCache.get(text);
+  if (v === undefined) {
+    v = escapeHtmlRaw(text);
+    if (escapeCache.size < ESCAPE_CACHE_MAX) escapeCache.set(text, v);
+  }
+  return v;
 }
 
 const SLUG_MAX = 64;
@@ -455,19 +454,20 @@ function endsParagraph(line) {
 }
 
 const trimLine = (line) => {
-  let a = 0;
-  let b = line.length;
-  while (a < b) {
-    const c = line.charCodeAt(a);
+  const n = line.length;
+  let from = 0;
+  let to = n;
+  while (from < to) {
+    const c = line.charCodeAt(from);
     if (c !== 32 && c !== 9) break;
-    a++;
+    from++;
   }
-  while (b > a) {
-    const c = line.charCodeAt(b - 1);
+  while (to > from) {
+    const c = line.charCodeAt(to - 1);
     if (c !== 32 && c !== 9) break;
-    b--;
+    to--;
   }
-  return a === 0 && b === line.length ? line : line.slice(a, b);
+  return from === 0 && to === n ? line : line.slice(from, to);
 };
 
 function lex(src) {
@@ -565,21 +565,16 @@ function findSingleStar(s, from) {
 
 /** `s` rendered inline; `env.link(target)` is a link's href. Plain runs are sliced whole, not built a character at a time. */
 function inline(s, env) {
-  // Fast path: when nothing in `s` starts an inline construct or needs HTML escaping, the line is
-  // already the output. One scan with an early exit beats building the flush closure and walking
-  // the string a second time, and most lines in a page are plain prose.
-  let plain = true;
-  for (let p = 0; p < s.length; p++) {
+  const n = s.length;
+  let p = 0;
+  while (p < n) {
     const c = s.charCodeAt(p);
-    if (c === 92 || c === 96 || c === 42 || c === 91 || c === 38 || c === 60 || c === 62 || c === 34 || c === 39) {
-      plain = false;
-      break;
-    }
+    if (c === 92 || c === 96 || c === 42 || c === 91 || c === AMP || c === LT || c === GT || c === QUOT || c === APOS) break;
+    p++;
   }
-  if (plain) return s;
+  if (p === n) return s;
   let out = '';
   let i = 0;
-  const n = s.length;
   let start = 0;
   const flush = (end) => {
     if (end > start) out += escapeHtml(s.slice(start, end));
