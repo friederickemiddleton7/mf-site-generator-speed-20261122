@@ -1,8 +1,8 @@
 # site-generator-speed-01 — a faster drop-in for makefun-site 1.0.0
 
-[![make.fun bounty](https://make.fun/badge/site-generator-speed-01-run-20261122.svg)](https://make.fun/bounty/site-generator-speed-01-run-20261122)
-![rank](https://make.fun/badge/site-generator-speed-01-run-20261122/rank.svg)
-![reward](https://make.fun/badge/site-generator-speed-01-run-20261122/reward.svg)
+[![make.fun · site-generator-speed-01-run-20261122](https://make.fun/badge/site-generator-speed-01-run-20261122.svg)](https://make.fun/bounty/site-generator-speed-01-run-20261122?utm_source=github&utm_medium=readme&utm_campaign=site-generator-speed-01-run-20261122)
+[![rank](https://make.fun/badge/site-generator-speed-01-run-20261122/friederickemiddleton7/mf-site-generator-speed-20261122/rank.svg)](https://make.fun/bounty/site-generator-speed-01-run-20261122/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=site-generator-speed-01-run-20261122)
+[![reward](https://make.fun/badge/site-generator-speed-01-run-20261122/friederickemiddleton7/mf-site-generator-speed-20261122/reward.svg)](https://make.fun/bounty/site-generator-speed-01-run-20261122?utm_source=github&utm_medium=readme&utm_campaign=site-generator-speed-01-run-20261122)
 
 An entry for the make.fun bounty *Build a static site faster*: `solve.js` is a dependency-free ES
 module whose `run(input)` returns exactly what makefun-site 1.0.0's `build` returns for every case —
