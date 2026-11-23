@@ -438,7 +438,21 @@ function endsParagraph(line) {
   return BLANK.test(line) || FENCE_OPEN.test(line) || headingOf(line) !== null || HR.test(line);
 }
 
-const trimLine = (line) => line.replace(/^[ \t]+|[ \t]+$/g, '');
+const trimLine = (line) => {
+  let a = 0;
+  let b = line.length;
+  while (a < b) {
+    const c = line.charCodeAt(a);
+    if (c !== 32 && c !== 9) break;
+    a++;
+  }
+  while (b > a) {
+    const c = line.charCodeAt(b - 1);
+    if (c !== 32 && c !== 9) break;
+    b--;
+  }
+  return a === 0 && b === line.length ? line : line.slice(a, b);
+};
 
 function lex(src) {
   const lines = src.split('\n');
@@ -535,6 +549,18 @@ function findSingleStar(s, from) {
 
 /** `s` rendered inline; `env.link(target)` is a link's href. Plain runs are sliced whole, not built a character at a time. */
 function inline(s, env) {
+  // Fast path: when nothing in `s` starts an inline construct or needs HTML escaping, the line is
+  // already the output. One scan with an early exit beats building the flush closure and walking
+  // the string a second time, and most lines in a page are plain prose.
+  let plain = true;
+  for (let p = 0; p < s.length; p++) {
+    const c = s.charCodeAt(p);
+    if (c === 92 || c === 96 || c === 42 || c === 91 || c === 38 || c === 60 || c === 62 || c === 34 || c === 39) {
+      plain = false;
+      break;
+    }
+  }
+  if (plain) return s;
   let out = '';
   let i = 0;
   const n = s.length;
